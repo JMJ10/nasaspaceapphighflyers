@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detailed Kerala Accident Map</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            height: 90%;
+            width: 100%;
+        }
+        #searchContainer {
+            padding: 10px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.8);
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        #locationInput {
+            padding: 5px;
+            font-size: 14px;
+            width: 200px;
+            margin-right: 5px;
+        }
+        #searchBtn {
+            padding: 6px 12px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="searchContainer">
+        <input type="text" id="locationInput" placeholder="Enter location name..." />
+        <button id="searchBtn">Search</button>
+    </div>
+    <div id="map"></div>
+    <script>
+        var map = L.map('map').setView([10.8505, 76.2711], 8);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        var searchMarker;
+var accidentData = [
+            {name: "Thiruvananthapuram Karamana", location: "Pappanamcode Junction", road: "National Highway 66 (NH 66)", accidents: 366, lat: 8.4718, lon: 76.9790},
+            {name: "Kollam Chavara PS", location: "Parimanam Temple", road: "National Highway 66 (NH 66)", accidents: 357, lat: 8.9555, lon: 76.5340},
+            {name: "Thiruvananthapuram CITY TRAFFIC", location: "Karamana Junction", road: "National Highway 66 (NH 66)", accidents: 314, lat: 8.4819, lon: 76.9663},
+            {name: "Malappuram KUTTIPURAM", location: "Kuttipuram Highway Junction", road: "National Highway 66 (NH 66)", accidents: 306, lat: 10.8331, lon: 75.9833},
+            {name: "Thiruvananthapuram Balaramapuram", location: "Balaramapuram Junction", road: "National Highway 66 (NH 66)", accidents: 300, lat: 8.4252, lon: 77.0455},
+            {name: "Ernakulam ANGAMALI", location: "Angamali Junction", road: "National Highway 544 (NH - 544)", accidents: 297, lat: 10.1912, lon: 76.3861},
+            {name: "Alappuzha KUTHIYATHODE", location: "Thuravoor Junction", road: "National Highway 66 (NH 66)", accidents: 275, lat: 9.8743, lon: 76.3139},
+            {name: "Alappuzha AROOR", location: "Aroor Main Junction", road: "National Highway 66 (NH 66)", accidents: 264, lat: 9.8696, lon: 76.3050},
+            {name: "Alappuzha Harippad", location: "Ashramam, Karuvatta South", road: "National Highway 66 (NH 66)", accidents: 262, lat: 9.1795, lon: 76.4931},
+            {name: "Thiruvananthapuram CITY TRAFFIC", location: "East Fort Junction", road: "Mahatma Gandhi road", accidents: 250, lat: 8.4828, lon: 76.9476},
+            {name: "Kollam Chavara PS", location: "Edapallykotta", road: "National Highway 66 (NH 66)", accidents: 249, lat:  8.9556, lon: 76.5639},
+            {name: "Kollam Karunagappally PS", location: "Junction", road: "National Highway 66 (NH 66)", accidents: 248, lat: 9.0556, lon: 76.5347},
+            {name: "Alappuzha Aroor", location: "Aroor Main Junction", road: "National Highway 66 (NH 66)", accidents: 243, lat: 9.8696, lon: 76.3050},
+            {name: "Thiruvananthapuram City Traffic", location: "Overbridge Junction", road: "Mahatma Gandhi road", accidents: 241, lat: 8.4961, lon: 76.9489},
+            {name: "Kozhikode TRAFFIC STATION", location: "Eranjippalam Junction", road: "National Highway 766 (NH 766)", accidents: 236, lat: 11.2715, lon: 75.7789},
+            {name: "Thiruvananthapuram Karamana", location: "Killipalam Junction", road: "National Highway 66 (NH 66)", accidents: 234, lat: 8.48200, lon: 76.9573},
+            {name: "Thiruvananthapuram City Traffic", location: "Pravachambalam", road: "National Highway 66 (NH 66)", accidents: 220, lat: 8.5593, lon: 76.9810},
+            {name: "Kollam OCHIRA", location: "Vavvakavu Junction", road: "National Highway 66 (NH 66)", accidents: 219, lat: 9.1376, lon: 76.5078},
+            {name: "Kollam KARUNAGAPPALLY", location: "KSRTC Stand Karunagappally", road: "National Highway 66 (NH 66)", accidents: 219, lat: 9.0556, lon: 76.5347},
+        
+            {name: "Kottayam Changanassery", location: "Perunna Junction", road: "National Highway 183 (NH 183)", accidents: 219, lat: 9.4581, lon: 76.5655},
+            {name: "Thrissur CHALAKUDI", location: "Chalakudi South Junction", road: "National Highway 544 (NH - 544)", accidents: 21, lat: 10.2989, lon: 76.3372},
+            {name: "Thiruvananthapuram City Traffic", location: "Kuzhivila Junction", road: "National Highway 66 Bypass (NH 66)", accidents: 22, lat: 8.5306, lon: 76.9437},
+            {name: "Alappuzha Pattanakkadu", location: "Pattanakkad", road: "National Highway 66 (NH 66)", accidents: 23, lat: 9.7305, lon: 76.3197},
+            {name: "Thrissur Pudukkad", location: "Pudukad", road: "National Highway 544 (NH - 544)", accidents: 24, lat: 10.4957, lon: 76.2072},
+            {name: "Kollam Kollam Traffic PS", location: "Ayathil Junction", road: "National Highway 66 Bypass (NH 66)", accidents: 25, lat: 8.8927, lon: 76.6126},
+            {name: "Thrissur Pudukkad", location: "Amballoor Junction", road: "National Highway 544 (NH - 544)", accidents: 26, lat: 10.4359, lon: 76.2676},
+            {name: "Alappuzha Nooranadu", location: "Nooranad", road: "Kayamkulam - Pathanapuram (SH)", accidents: 27, lat: 9.1714, lon: 76.5976},
+            {name: "Kozhikode Traffic City", location: "Pantheerankavu", road: "National Highway 66 Bypass (NH 66)", accidents: 28, lat: 11.2342, lon: 75.8414},
+            {name: "Kollam Chadayamangalam PS", location: "Ayoor Junction", road: "Main Central Road (SH 1)", accidents: 29, lat: 8.8976, lon: 76.8611},
+            {name: "Alappuzha NOORANADU", location: "Charummoodu", road: "National Highway 183 (NH 183)", accidents: 30, lat: 9.1721, lon: 76.6112},
+            {name: "Thiruvananthapuram CITY TRAFFIC", location: "Palayam", road: "National Highway 66 (NH 66)", accidents: 31, lat: 8.5152, lon: 76.9363},
+            {name: "Pathanamthitta THIRUVALLA", location: "Thukalassery", road: "National Highway 183 (NH 183)", accidents: 32, lat: 9.3763, lon: 76.5795},
+            {name: "Kozhikode Traffic City", location: "Arayidathupalam Junction", road: "Mavoor road", accidents: 33, lat: 11.2522, lon: 75.7844},
+            
+            {name: "Thiruvananthapuram Attingal", location: "Alamcode Junction", road: "National Highway 66 (NH 66)", accidents: 53, lat: 8.7030, lon: 76.8143},
+            {name: "Kollam Kollam East PS", location: "Prathibha Junction", road: "National Highway 744 (NH 744)", accidents: 58, lat: 8.8916, lon: 76.5912},
+            {name: "Alappuzha Kayamkulam", location: "Kottukulangar", road: "National Highway 66 (NH 66)", accidents: 54, lat: 9.1487, lon: 76.5115},
+            {name: "Alappuzha Harippad", location: "Harippad Junction", road: "National Highway 66 (NH 66)", accidents: 47, lat: 9.1795, lon: 76.4931},
+            {name: "Thiruvananthapuram KALLAMBALAM", location: "Kallambalam Junction", road: "National Highway 66 (NH 66)", accidents: 52, lat: 8.7632, lon: 76.7913},
+            {name: "Thrissur KORATTI", location: "Koratty Junction", road: "National Highway 544 (NH 544)", accidents: 52, lat: 10.2976, lon: 76.4851},
+            {name: "Thiruvananthapuram City Traffic", location: "Kaimanam", road: "National Highway 66 (NH 66)", accidents: 57, lat: 8.5161, lon: 76.9101},
+            {name: "Kollam Kottiyam PS", location: "Kottiyam Junction", road: "National Highway 66 (NH 66)", accidents: 54, lat: 8.9167, lon: 76.6269},
+            {name: "Ernakulam CITY TRAFFIC EAST", location: "Vyttila Junction", road: "National Highway 66 (NH 66)", accidents: 50, lat: 9.9757, lon: 76.3020},
+            {name: "Alappuzha Cherthala", location: "Pullattuvadakkeveli,Cherthala", road: "National Highway 66 (NH 66)", accidents: 55, lat: 9.5253, lon: 76.3290},
+            {name: "Kollam OCHIRA", location: "Changankulangara", road: "National Highway 66 (NH 66)", accidents: 47, lat: 9.1376, lon: 76.5078},
+            {name: "Thrissur KUNNAMKULAM", location: "Kunnamkulam Junction", road: "Thrissur - Kuttipuram Road (SH 6)", accidents: 47, lat: 10.3034, lon: 76.5780},
+            {name: "Thiruvananthapuram CITY TRAFFIC", location: "Pallichal", road: "National Highway 66 (NH 66)", accidents: 50, lat: 8.4902, lon: 76.9169},
+            {name: "Alappuzha Pattanakkadu", location: "Mahadeva Temple,Pattanakad", road: "National Highway 66 (NH 66)", accidents: 46, lat: 9.7325, lon: 76.3187},
+            {name: "Kollam Chavara PS", location: "Altharamoodu Junction", road: "National Highway 66 (NH 66)", accidents: 43, lat: 8.8919, lon: 76.5750},
+            
+            {name: "Kottayam Ettumanoor", location: "Ettumanoor", road: "Main Central Road (SH 1)", accidents: 52, lat: 9.5509, lon: 76.5567},
+                        
+            {name: "Pathanamthitta ADOOR", location: "Central Junction,Adoor", road: "Main Central Road (SH 1)", accidents: 54, lat: 8.4902, lon: 76.9169},
+            {name: "Ernakulam AIRPORT", location: "Athani Junction", road: "National Highway 544 (NH 544)", accidents: 51, lat: 8.4902, lon: 76.9169},
+            {name: "Alappuzha Kayamkulam", location: "Highway Palace Kayamkulam", road: "National Highway 66 (NH 66)", accidents: 47, lat: 8.4902, lon: 76.9169},
+            {name: "Kollam Chavara PS", location: "Neendakara Junction", road: "National Highway 66 (NH 66)", accidents: 47, lat: 8.4902, lon: 76.9169},
+            {name: "Thirruvananthapuram BALARAMAPURAM", location: "Vedivechancoil", road: "National Highway 66 (NH 66)", accidents: 52, lat: 8.4902, lon: 76.9169},
+            {name: "Alappuzha Mararikkulam", location: "Mayithara", road: "National Highway 66 (NH 66)", accidents: 48, lat: 8.4902, lon: 76.9169},
+            {name: "Thiruvananthapuram City Traffic", location: "Kulathoor NH Bypass Junction", road: "NH 66 Bypass Road", accidents: 49, lat: 8.4902, lon: 76.9169},
+            {name: "Alappuzha Kareekulangara", location: "Ramapuram Junction", road: "National Highway 66 (NH 66)", accidents: 41, lat: 8.4902, lon: 76.9169},
+            {name: "Thiruvanantahpuram ATTINGAL", location: "Attingal", road: "National Highway 66 (NH 66)", accidents: 50, lat: 8.4902, lon: 76.9169},
+            {name: "Alappuzha Mararikulam", location: "Mararikulam", road: "National Highway 66 (NH 66)", accidents: 52, lat: 8.4902, lon: 76.9169},
+            {name: "Thrissur THRISSUR TRAFFIC PS", location: "Punkunnam Junction", road: "Thrissur - Kuttipuram Road (SH 6)", accidents: 49, lat: 8.4902, lon: 76.9169},
+            {name: "Pathanamthitta THIRUVALLA", location: "Deepa Junction", road: "National Highway 183 (NH 183)", accidents: 49, lat: 8.4902, lon: 76.9169},
+            {name: "Thiruvananthapuram City Traffic", location: "Sreekaryam", road: "National Highway 66 (NH 66)", accidents: 50, lat: 8.4902, lon: 76.9169},
+            {name: "Thrissur Thrissur Town East", location: "Cochin Dewasvom Board Junction", road: "Kodungalloor - Shornur Road (SH 22)", accidents: 51, lat: 8.4902, lon: 76.9169},
+            {name: "Kollam Parippally PS", location: "Paripally", road: "National Highway 66 (NH 66)", accidents: 44, lat: 8.4902, lon: 76.9169},
+            
+            {name: "Alappuzha Vallikunnam", location: "Kattanam", road: "Kayamkulam - Pathanapuram Road (SH 5)", accidents: 50, lat: 9.1296, lon: 76.5735},
+            {name: "Thrissur Pudukkad", location: "Paliyekara Toll Plaza", road: "National Highway 544 (NH 544)", accidents: 50, lat: 10.5817, lon: 76.2145},
+            {name: "Thiruvananthapuram City Traffic", location: "Vailyathura", road: "Valiyathura - Muttathura Road", accidents: 50, lat: 8.4645, lon: 76.9273},
+            {name: "Alappuzha Punnapra", location: "Paravoor Junction", road: "National Highway 66 (NH 66)", accidents: 43, lat: 9.4334, lon: 76.3452},
+            {name: "Kottayam Gandhinagar", location: "Nagampadam", road: "Main Central Road (SH 1)", accidents: 39, lat: 9.5977, lon: 76.5277},
+            {name: "Palakkad VADAKKENCHERRY", location: "Mangalam Bridge", road: "National Highway 544 (NH 544)", accidents: 39, lat: 10.5878, lon: 76.4841},
+            {name: "Kollam CHAVARA", location: "Chavara", road: "National Highway 66 (NH 66)", accidents: 45, lat: 8.9981, lon: 76.5782},
+            {name: "Thiruvananthapuram CITY TRAFFIC", location: "Vazhamuttam", road: "National Highway 66 Bypass", accidents: 46, lat: 8.97462, lon: 76.53505},
+            {name: "Pathanamthitta PATHANAMTHITTA", location: "Kumbazha", road: "State Highway 8 (SH 8)", accidents: 47, lat: 9.4175, lon: 76.5658},
+            {name: "Alappuzha HARIPPAD", location: "Kumarapuram,Thamallackal", road: "National Highway 66 (NH 66)", accidents: 39, lat: 9.1838, lon: 76.5130},
+            {name: "Kottayam KURAVILANGADU", location: "Thottuva", road: "Kuravilangadu - Kuruppunthara Road", accidents: 48, lat: 9.7546, lon: 76.5425},
+            {name: "Kollam Kottiyam PS", location: "Mylakkad", road: "National Highway 66 (NH 66)", accidents: 44, lat: 8.9778, lon: 76.5720},
+            {name: "Kollam KARUNAGAPPALLY", location: "Puthiyakavu Junction", road: "National Highway 66 (NH 66)", accidents: 44, lat: 9.0450, lon: 76.5173},
+            {name: "Kottayam CHINGAVANAM", location: "Kodimatha", road: "National Highway 183 (NH 183)", accidents: 44, lat: 9.57960, lon: 76.5195},
+            {name: "Alappuzha Harippad", location: "Dhanapady Junction, Haripad", road: "National Highway 66 (NH 66)", accidents: 40, lat: 9.1736, lon: 76.5043},
+            {name: "Thrissur KORATTI", location: "Muringoor", road: "National Highway 544 (NH 544)", accidents: 45, lat: 10.2980, lon: 76.4853},
+            {name: "Kottayam Changanassery", location: "Valiyakulam", road: "Karukachal - Changanassery Road", accidents: 41, lat: 9.4581, lon: 76.5655},
+            {name: "Ernakulam Traffic East PS", location: "Kundanoor Bridge", road: "National Highway 66 (NH 66)", accidents: 50, lat: 9.9355, lon: 76.3108},
+            {name: "Kollam TRAFFIC PS QUILON", location: "Thattamala", road: "National Highway 66 (NH 66)", accidents: 46, lat: 8.9808, lon: 76.5809},
+            {name: "Alappuzha Ambalapuzha", location: "Near Ambalappuzha Junction", road: "National Highway 66 (NH 66)", accidents: 43, lat: 9.5148, lon: 76.3245},
+            {name: "Kottayam TRAFFIC PS KOTTAYA", location: "Kanjikuzhy", road: "National Highway 183 (NH 183)", accidents: 48, lat: 9.5876, lon: 76.5430},
+            {name: "Kottayam CHANGANASSERY", location: "Thuruthy", road: "Main Central Road (SH 1)", accidents: 37, lat: 9.4480, lon: 76.5533},
+            {name: "Thiruvananthapuram CITY TRAFFIC", location: "Muttathara", road: "National Highway 66 Bypass", accidents: 46, lat: 8.4982, lon: 76.9710},
+            {name: "Alappuzha Aroor", location: "Chandiroor", road: "National Highway 66 (NH 66)", accidents: 38, lat: 9.8600, lon: 76.2931},
+            {name: "Kollam TRAFFIC PS QUILON", location: "Asramam", road: "Asramam Road", accidents: 43, lat: 8.9796, lon: 76.5620},
+            {name: "Thrissur Traffic Thrissur", location: "Sakthan Thampuran Round About", road: "Municipal Office Road", accidents: 43, lat: 10.5282, lon: 76.2059},
+            {name: "Kottayam Ettumanoor", location: "Athirampuzha", road: "Ettumanoor - Athirampuzha Road", accidents: 44, lat: 9.6711, lon: 76.5565},
+            {name: "Malappuram THIROOR", location: "Chembra", road: "State Highway 71 (SH 71)", accidents: 44, lat: 10.8205, lon: 75.9730},
+            {name: "Thiruvananthapuram City Traffic", location: "Kesavadasapuram", road: "National Highway 66 (NH 66)", accidents: 44, lat: 8.4902, lon: 76.9169},
+            {name: "Alappuzha CHENGANNOOR", location: "Anjalimoodu Junction", road: "National Highway 183 (NH 183)", accidents: 40, lat: 9.4775, lon: 76.3638},
+            {name: "Ernakulam CITY TRAFFIC EAST", location: "Cheranalloor", road: "National Highway 66 (NH 66)", accidents: 45, lat: 9.9916, lon: 76.3020},
+            {name: "Ernakulam Elamakkara", location: "Edapally", road: "National Highway 66 (NH 66)", accidents: 45, lat: 10.0047, lon: 76.2988},
+            {name: "Ernakulam PERUMBAVOOR", location: "Perumbavoor", road: "State Highway 16 (SH 16)", accidents: 42, lat: 10.3518, lon: 76.3900},
+            {name: "Ernakulam ALUVA", location: "Paravoor Junction", road: "National Highway 544 (NH 544)", accidents: 42, lat: 10.1287, lon: 76.3910},
+            {name: "Thiruvananthapuram City Traffic", location: "Vellayambalam", road: "State Highway 2 (SH 2)", accidents: 42, lat: 8.4961, lon: 76.9003},
+            {name: "Ernakulam KALADI", location: "Mattoor", road: "Main Central Road (SH 1)", accidents: 43, lat: 10.1706, lon: 76.4294},
+            {name: "Kozhikode Feroke", location: "Ramanattukara", road: "National Highway 66 (NH 66)", accidents: 39, lat: 11.1578, lon: 75.8710},
+
+            {name: "Ernakulam CITY TRAFFIC WEST", location: "Atlantis Junction", road: "Mahatma Gandhi Road", accidents: 44, lat: 9.9814, lon: 76.2982},
+            {name: "Kozhikode TRAFFIC STATION", location: "Thondayad", road: "Mavoor Road", accidents: 40, lat: 11.2588, lon: 75.7804},
+            {name: "Ernakulam CITY TRAFFIC EAST", location: "Kalamassery", road: "National Highway 544 (NH 544)", accidents: 40, lat: 10.0120, lon: 76.3098},
+            {name: "Pathanamthitta Konni", location: "Konni", road: "State Highway 8 (SH 8)", accidents: 45, lat: 9.2432, lon: 76.8061},
+            {name: "Pathanamthitta THIRUVALLA", location: "Kavumbhagam", road: "Kavumbhagam - Muthoor Road", accidents: 45, lat: 9.3772, lon: 76.5578},
+            {name: "Thiruvananthapuram City Traffic", location: "Manacaud", road: "Trivandrum Vizhinjam Road", accidents: 42, lat: 8.5190, lon: 76.9499},
+            {name: "Kozhikode TRAFFIC STATION", location: "Malaparamba", road: "National Highway 66 Bypass", accidents: 38, lat: 11.2584, lon: 75.7818},
+            {name: "Kollam Kollam Traffic PS", location: "Kachery Junction", road: "National Highway 66 (NH 66)", accidents: 38, lat: 8.8879, lon: 76.6072},
+            {name: "Thiruvananthapuram CITY TRAFFIC", location: "Vellayani Junction", road: "National Highway 66 (NH 66)", accidents: 39, lat: 8.4989, lon: 76.9322},
+            {name: "Kollam Sakthikulangara PS", location: "Kureepuzha", road: "National Highway 66 (NH 66)", accidents: 35, lat: 8.9265, lon: 76.5871},
+            {name: "Thiruvananthapuram ATTINGAL", location: "Attingal", road: "National Highway 66 (NH 66)", accidents: 44, lat: 8.7062, lon: 76.8140},
+            {name: "Alappuzha Kayamkulam", location: "Kayamkulam", road: "National Highway 66 (NH 66)", accidents: 41, lat: 9.2135, lon: 76.5138},
+            {name: "Alappuzha AMBALAPUZHA", location: "Purakkad", road: "National Highway 66 (NH 66)", accidents: 41, lat: 9.3534, lon: 76.3651},
+            {name: "Thrissur Thrissur Town West", location: "West Fort Junction", road: "West Fort Road", accidents: 41, lat: 10.5275, lon: 76.2062},
+            {name: "Thiruvananthapuram CITY TRAFFIC", location: "Vattiyoorkavu Junction", road: "Vattiyoorkavu - Puliyarakonam Road", accidents: 41, lat: 8.5720, lon: 76.9277},
+            {name: "Kollam Kottiyam PS", location: "KIMS Kottayam", road: "National Highway 66 (NH 66)", accidents: 38, lat: 8.9465, lon: 76.6078},
+            {name: "Thiruvananthapuram Attingal", location: "Mamom", road: "National Highway 66 (NH 66)", accidents: 39, lat: 8.7078, lon: 76.8137},
+            {name: "Kollam KUNDARA", location: "Mukkada Junction", road: "National Highway 744 (NH 744)", accidents: 39, lat: 8.8853, lon: 76.5674},
+            {name: "Malappuram Thenhipalam", location: "Kakkanchery", road: "National Highway 66 (NH 66)", accidents: 35, lat: 11.0253, lon: 75.8656},
+            {name: "Thrissur Pudukkad", location: "Thalore", road: "Thrissur - Thalore Road", accidents: 36, lat: 10.5361, lon: 76.2183},
+            {name: "Ernakulam CITY TRAFFIC WEST", location: "Palluruthy", road: "Aroor - Thoppumpady Road", accidents: 45, lat: 9.9758, lon: 76.2959},
+            {name: "Kottayam PALAI", location: "Lalam Bridge", road: "Main Eastern Highway(SH 8)", accidents: 41, lat: 9.7136, lon: 76.6883},
+            {name: "Ernakulam CITY TRAFFIC EAST", location: "Kundanoor Junction", road: "National Highway 66 (NH 66)", accidents: 41, lat: 10.0054, lon: 76.3104},
+            {name: "Kollam CHAVARA", location: "Nallezuthu Junction", road: "National Highway 66 (NH 66)", accidents: 38, lat: 8.9874, lon: 76.5342},
+            {name: "Ernakulam CITY TRAFFIC EAST", location: "Chalikkavattom", road: "National Highway 66 (NH 66)", accidents: 34, lat: 10.0061, lon: 76.2984},
+            {name: "Ernakulam ALUVA", location: "Pulinchuvadu", road: "National Highway 544 (NH 544)", accidents: 39, lat: 10.0156, lon: 76.3338},
+            {name: "Ernakulam CITY TRAFFIC EAST", location: "Kaloor Junction", road: "Banerji Road", accidents: 39, lat: 10.0089, lon: 76.2951},
+            {name: "Ernakulam CITY TRAFFIC EAST", location: "Thykoodam", road: "National Highway 66 (NH 66)", accidents: 39, lat: 10.0278, lon: 76.3027},
+            {name: "Alappuzha Aroor", location: "Eramalloor", road: "National Highway 66 (NH 66)", accidents: 35, lat: 9.4536, lon: 76.4159},
+            {name: "Idukki THODUPUZHA", location: "Vengalloor", road: "Punalur - Muvattupuzha Road (SH 8)", accidents: 41, lat: 9.9099, lon: 76.7032},
+            {name: "Ernakulam CITY TRAFFIC EAST", location: "South Kalamassery Junction", road: "National Highway 544 (NH 544)", accidents: 41, lat: 10.0081, lon: 76.3089},
+            {name: "Thiruvananthapuram City Traffic", location: "Mananthala Junction", road: "Main Central Road (SH 1)", accidents: 41, lat: 8.5167, lon: 76.9295},
+            {name: "Kollam Sakthikulangara PS", location: "Kavanad", road: "National Highway 66 (NH 66)", accidents: 37, lat: 8.9297, lon: 76.5899},
+            {name: "Thiruvananthapuram Kilimanoor", location: "Kilimanoor Junction", road: "Main Central Road (SH 1)", accidents: 37, lat: 8.6522, lon: 76.8131},
+            {name: "Thrissur CHALAKUDI", location: "Court Junction", road: "National Highway 544 (NH 544)", accidents: 37, lat: 10.3560, lon: 76.5174},
+            {name: "Ernakulam Kalamassery", location: "TVS Junction", road: "National Highway 544 (NH 544)", accidents: 37, lat: 10.0060, lon: 76.3042},
+            {name: "Thiruvananthapuram CITY TRAFFIC", location: "Thiruvallom JUnction", road: "National Highway 66 (NH 66)", accidents: 37, lat: 8.5253, lon: 76.9528},
+            {name: "Wayanad KALPETTA", location: "Kalpetta", road: "Mananthavadi - Wayanad Road", accidents: 38, lat: 11.6853, lon: 76.0841},
+            {name: "Thiruvananthapuram KULAKKADA", location: "Kottukal Junction", road: "Main Central Road (SH 1)", accidents: 36, lat: 8.5248, lon: 76.9481},
+            {name: "Idukki Peerumade", location: "Peermade", road: "National Highway 183 (NH 183)", accidents: 38, lat: 9.6063, lon: 77.0759},
+            {name: "Kottayam KUMILY", location: "Kumily Junction", road: "National Highway 183 (NH 183)", accidents: 38, lat: 9.6421, lon: 77.0593},
+            {name: "Malappuram Traffic Malappuram", location: "Malappuram", road: "State Highway 71 (SH 71)", accidents: 34, lat: 11.0688, lon: 75.9599},
+            {name: "Kozhikode PAVANGADY", location: "Vadakara", road: "National Highway 66 (NH 66)", accidents: 35, lat: 11.3983, lon: 75.7671},
+            {name: "Kozhikode Vatakara", location: "Vatakara", road: "National Highway 66 (NH 66)", accidents: 40, lat: 11.4983, lon: 75.7671},
+            {name: "Thiruvananthapuram CITY TRAFFIC", location: "Palayam", road: "National Highway 66 (NH 66)", accidents: 40, lat: 8.5323, lon: 76.9487},
+            {name: "Ernakulam ALUVA", location: "Pulinchuvadu", road: "National Highway 544 (NH 544)", accidents: 36, lat: 10.0190, lon: 76.3322},
+            {name: "Kollam PARIPPALLY", location: "Mukkada Junction", road: "National Highway 66 (NH 66)", accidents: 32, lat: 8.8837, lon: 76.6218},
+            {name: "Kollam OCHIRA", location: "Ochira", road: "National Highway 66 (NH 66)", accidents: 37, lat: 9.1253, lon: 76.5097},
+            {name: "Ernakulam CITY TRAFFIC EAST", location: "Edappally", road: "National Highway 66 (NH 66)", accidents: 37, lat: 10.0062, lon: 76.3079},
+            {name: "Thiruvananthapuram CITY TRAFFIC", location: "Paruthikuzhy Junction", road: "National Highway 66 (NH 66)", accidents: 37, lat: 8.5152, lon: 76.9423},
+            {name: "Thiruvananthapuram KALLAMBALAM", location: "Kallambalam", road: "National Highway 66 (NH 66)", accidents: 38, lat: 8.6220, lon: 76.8102},
+            {name: "Thrissur Kodungallur", location: "Chandrapur" , road: "National Highway 66 (NH 66)", accidents: 38, lat: 10.1950, lon: 76.2065},
+            {name: "Wayanad Sulthan Batheri", location: "Chungam Junction", road: "National Highway 66 (NH 66)", accidents: 38, lat: 11.6773, lon: 76.1251},
+            {name: "Ernakulam CITY TRAFFIC EAST", location: "Geetanjali Junction", road: "National Highway 66 (NH 66)", accidents: 38, lat: 10.0031, lon: 76.3105},
+            {name: "Ernakulam CITY TRAFFIC EAST", location: "Edapally Toll Junction ", road: "National Highway 66 (NH 66)", accidents: 38, lat: 10.0003, lon: 76.2994},
+            {name: "Thiruvananthapuram Kazhakkuttom", location: "Ambalathinkkara", road: "National Highway 66 (NH 66)", accidents: 38, lat: 8.5351, lon: 76.9352},
+            {name: "Ernakulam KALADI", location: "Kalady Junction", road: "Main Central Road (SH 1)", accidents: 34, lat: 10.0324, lon: 76.3950},
+            {name: "Malappuram VALANCHERRY", location: "Valanchery", road: "National Highway 66 (NH 66)", accidents: 36, lat: 11.0950, lon: 75.9206},
+            {name: "Kottayam Traffic Kottayam", location: "Logos Junction", road: "Railway Station Road", accidents: 36, lat: 9.5919, lon: 76.5225},
+            {name: "Kollam Parippally PS", location: "Kalluvathukal JUnction", road: "National Highway 66 (NH 66)", accidents: 32, lat: 8.8842, lon: 76.6463},
+            {name: "Thiruvananthapuram CITY TRAFFIC", location: "Infosys", road: "National Highway 66 Bypass", accidents: 41, lat: 8.5296, lon: 76.9495},
+
+            {name: "Thrissur Traffic Thrissur", location: "Marar Road Junction - Chettiyangadi Junction", road: "National Highway 66 (NH 66)", accidents: 37, lat: 10.5379, lon: 76.2060},       
+            {name: "Thrissur PERAMANGALAM", location: "Mundur Service Co-Operative Bank - 50m before Federal Bank", road: "Thrissur - Shornur Road", accidents: 37, lat: 10.56604, lon: 76.14493},
+            {name: "Ernakulam CITY TRAFFIC EAST", location: "Sri Muruga Saravana Bhavan - 70m after D.T.D.C.", road: "Chittoor Road", accidents: 38, lat: 9.9816, lon: 76.2997},
+            {name: "Kollam Chathannoor PS", location: "70m before Arunodhayam Auditorium - 50m after Federal Bank ATM", road: "NH66", accidents: 31, lat: 8.8883, lon: 76.7313},
+            {name: "Kollam PUNALUR", location: "BP Fuel Station - Kumar Palace Road Jn", road: "NH744", accidents: 31, lat: 9.0032, lon: 76.9301},
+            {name: "Kottayam Kuravilangadu", location: "School", road: "SH40", accidents: 36, lat: 9.7361, lon: 76.5717},
+            {name: "Ernakulam Perumbavoor", location: "Iringole Post Office - St. Thomas Church", road: "Aluva-Munnar Road", accidents: 36, lat: 10.1092, lon: 76.4732},
+            {name: "Kollam Killikollur", location: "Catholic Syrian Bank - 140m after KJ Hospital", road: "NH183", accidents: 36, lat: 8.8873, lon: 76.6116},
+            {name: "Thiruvananthapuram City Traffic", location: "Vettukad Church - St. Mary's Church, Cheruvettukad", road: "NH66", accidents: 36, lat: 8.5045, lon: 76.9099},
+            {name: "Thrissur PERAMANGALAM", location: "130m after Cheerakuzhy Subramania Temple - Adat Farmers Service CoOperative Bank", road: "Thrissur - Shornur Road", accidents: 32, lat: 10.6102, lon: 76.1417},
+            {name: "Kozhikode TRAFFIC STATION", location: "KSEB Electrical Section, Pottammal - Abeer Medical Center", road: "Mini Bypass Road", accidents: 32, lat: 11.2533, lon: 75.7843},
+            {name: "Kollam KOTTIYAM", location: "80m before HM Shopping Mall - 210m after Kannanalloor Junction", road: "NH66", accidents: 37, lat: 8.9108, lon: 76.6696},
+            {name: "Kozhikode TRAFFIC STATION", location: "Mango Hypermarket - Salafi Masjid", road: "Kozhikode - Balussery Road", accidents: 37, lat: 11.2618, lon: 75.7804},
+            {name: "Kozhikode TRAFFIC STATION", location: "Kunnamangalam UP School - Daymart Supermarket", road: "NH766", accidents: 37, lat: 11.2954, lon: 75.8936},
+            {name: "Thiruvananthapuram CITY TRAFFIC", location: "250m before and after Petrol Pump", road: "NH66", accidents: 37, lat: 8.5105, lon: 76.9492},
+            {name: "Kozhikode TRAFFIC STATION", location: "YMCA Cross Road Junction - Kozhikode District Co Operative Bank", road: "Mavoor Road", accidents: 33, lat: 11.2528, lon: 75.7766},
+            {name: "Thiruvananthapuram Kazhakkuttom", location: "TRINS PreSchool - Technopark Main Gate", road: "NH66", accidents: 33, lat: 8.5581, lon: 76.8765},
+            {name: "Kottayam TRAFFIC PS KOTTAYA", location: "Seematti Roundabout - Dhanya Remya Theatre", road: "Kumarakom Road", accidents: 38, lat: 9.5869, lon: 76.5219},
+            {name: "Kollam KILIKOLLOOR", location: "Killikollur Railway Station - 70m after Kairali Ford", road: "NH744", accidents: 34, lat: 8.8891, lon: 76.6183},
+            {name: "Thiruvananthapuram Venjarammood", location: "Alanthara Petrol Pump - Indian Coffee House", road: "MC Road", accidents: 34, lat: 8.6717, lon: 76.9234},
+            {name: "Ernakulam CITY TRAFFIC WEST", location: "50m before St Thomas More Roman Catholic Latin Church - Janatha Junction", road: "SA Road", accidents: 34, lat: 9.9785, lon: 76.3046},
+            {name: "Alappuzha Kuthiathode PS", location: "Pattukulangara Devi Temple - Indian Coffee House, Thuravoor", road: "NH66", accidents: 30, lat: 9.7351, lon: 76.3461},
+            {name: "Alappuzha Punnapra", location: "CSI Church - Carmel Road Junction", road: "NH66", accidents: 30, lat: 9.4639, lon: 76.3347},
+            {name: "Ernakulam North Parur", location: "Bank of India ATM - 50m before Kairali Motors", road: "Aluva-Parur Road", accidents: 35, lat: 10.1379, lon: 76.2183},
+            {name: "Thiruvananthapuram Vattappara", location: "85m after HP Fuel Station - 85m before Yamaha Showroom", road: "NH66", accidents: 35, lat: 8.5974, lon: 76.9475},
+            {name: "Thrissur Thrissur Town West", location: "Society", road: "Sankarayya Road", accidents: 35, lat: 10.5254, lon: 76.2140},
+            {name: "Thrissur Irinjalakkuda", location: "50 mts before Vellangallur Jn - Glamour Fuels Indian Oil", road: "Thrissur-Kodungallur Road", accidents: 35, lat: 10.3393, lon: 76.2049},
+            {name: "Alappuzha Punnapra", location: "Assembly Road Junction - IOC Pump, Punnapra", road: "NH66", accidents: 31, lat: 9.4399, lon: 76.3431},
+            {name: "Thrissur KORATTI", location: "Kerala Gramin Bank - 60ms before IOC pump", road: "NH544", accidents: 31, lat: 10.2731, lon: 76.4248},
+            {name: "Palakkad Traffic Palakkad", location: "220m before Kazchaparambu Junction - Dubai Motors", road: "NH544", accidents: 23, lat: 10.7795, lon: 76.6562},
+            {name: "Thrissur Traffic Thrissur", location: "District Medical Office - KFC", road: "Sankarayya Road", accidents: 36, lat: 10.5256, lon: 76.2138},
+            {name: "Thiruvananthapuram City Traffic", location: "Karakkamandapam Junction - 100m before Indian Oil Petrol Pump", road: "NH66", accidents: 36, lat: 8.4736, lon: 76.9614},
+            {name: "Thiruvananthapuram CITY TRAFFIC", location: "Poonthura Junction - SM Lock Junction", road: "NH66", accidents: 36, lat: 8.4439, lon: 76.9440},
+            {name: "Ernakulam MUVATTUPUZHA", location: "40m after Karshika Sahakarana Bank - Nehru Junction", road: "MC Road", accidents: 32, lat: 9.9823, lon: 76.5761},
+            {name: "Kottayam KURAVILANGADU", location: "100m after Vempally Post Office - Vempally Thekkekavala", road: "SH40", accidents: 32, lat: 9.7317, lon: 76.5759},
+            {name: "Kozhikode QUILANDY", location: "Namdilath G Mart - Indian Oil Petrol Pump", road: "NH66", accidents: 32, lat: 11.4365, lon: 75.6981},
+            {name: "Thiruvananthapuram Varkala", location: "Indian Overseas Bank - Dhanya Supermarket", road: "NH66", accidents: 28, lat: 8.7392, lon: 76.7154},
+            {name: "Ernakulam CITY TRAFFIC WEST", location: "50m after Bridge - IG Office", road: "SA Road", accidents: 37, lat: 9.9781, lon: 76.3055},
+            {name: "Kollam Shakthikulangara P S", location: "40m after Kaloor Bhagavathy Temple - Ramankulangara Junction", road: "NH66", accidents: 33, lat: 8.8912, lon: 76.6007},
+            {name: "Kozhikode TRAFFIC STATION", location: "BSNL Exchange Feroke - AM Motors", road: "NH66", accidents: 29, lat: 11.1781, lon: 75.8414},
+            {name: "Thrissur KODUNGALLUR", location: "250m before Bridge - 250m after Bridge", road: "SH22", accidents: 28, lat: 10.2209, lon: 76.2001},
+            {name: "Thiruvananthapuram Vattiyoorkavu", location: "40m before Vattiyoorkavu Junction - Sree Sankara Vidya Mandir", road: "NH66", accidents: 35, lat: 8.5464, lon: 76.9803},
+            {name: "Palakkad Mannarkkad", location: "300m before Mankara Jn - 500m after Mankara Jn", road: "NH966", accidents: 35, lat: 10.9939, lon: 76.4591},
+            {name: "Palakkad Traffic Pallakad", location: "50m after Murali Gadi - 50m before Balan Gadi", road: "NH966", accidents: 34, lat: 10.7868, lon: 76.6543},
+            {name: "Ernakulam CITY TRAFFIC EAST", location: "50m after Janatha Junction - Kottapadi", road: "NH966A", accidents: 34, lat: 9.9810, lon: 76.3161},
+            {name: "Kollam Pathanapuram", location: "25m after Vilakku Jn - 80m before Vilakku Jn", road: "SH1", accidents: 34, lat: 9.1134, lon: 76.9183},
+            {name: "Kollam Kottarakkara", location: "20m before Kottarakkara Town - 50m after Kottarakkara Town", road: "NH744", accidents: 34, lat: 9.0013, lon: 76.7971},
+            {name: "Alappuzha Kuttanadu", location: "10m before Thalayolaparambu - 30m after Thalayolaparambu", road: "SH40", accidents: 32, lat: 9.7427, lon: 76.4018},
+            {name: "Alappuzha Ambalappuzha", location: "100m before CMC", road: "NH66", accidents: 32, lat: 9.3792, lon: 76.3753},
+            {name: "Thrissur KODUNGALLUR", location: "Nellakotta Junction - Trichur Rly Stn Jn", road: "SH22", accidents: 28, lat: 10.2235, lon: 76.2073},
+            {name: "Palakkad Traffic PALAKKAD", location: "50m before Muthuthalath Road - 200m after Muthuthalath Road", road: "NH966", accidents: 26, lat: 10.7815, lon: 76.6567},
+            {name: "Thiruvananthapuram Nemom", location: "100m before Oddakkadu Junction - 200m after Oddakkadu Junction", road: "NH66", accidents: 26, lat: 8.4577, lon: 76.9993},
+            {name: "Thiruvananthapuram Muthalappozhi", location: "400m before Muthalappozhi - 400m after Muthalappozhi", road: "NH66", accidents: 24, lat: 8.6429, lon: 76.8346},
+            {name: "Alappuzha Cherthala", location: "Avenue Road Junction - Ikkara Junction", road: "NH66", accidents: 20, lat: 9.6829, lon: 76.3414},
+            {name: "Kozhikode Kottara", location: "Bhima Junction - Kottara", road: "NH66", accidents: 20, lat: 11.2921, lon: 75.7770},
+            {name: "Ernakulam Muvattupuzha", location: "50m before St. Augustine's Church - 200m after St. Augustine's Church", road: "MC Road", accidents: 20, lat: 9.9877, lon: 76.5761},
+            {name: "Palakkad Traffic PALAKKAD", location: "50m before Muthuthalath Road - 200m after Muthuthalath Road", road: "NH966", accidents: 18, lat: 10.7815, lon: 76.6567},
+            {name: "Alappuzha Kuttanadu", location: "10m before Thalayolaparambu - 30m after Thalayolaparambu", road: "SH40", accidents: 16, lat: 9.7427, lon: 76.4018},
+            {name: "Kozhikode KOTTIYAM", location: "10m before Kottiyam - 30m after Kottiyam", road: "NH66", accidents: 12, lat: 8.8909, lon: 76.6291},
+            {name: "Kollam Pathanapuram", location: "25m after Vilakku Jn - 80m before Vilakku Jn", road: "SH1", accidents: 10, lat: 9.1134, lon: 76.9183},
+            {name: "Kollam Kottarakkara", location: "20m before Kottarakkara Town - 50m after Kottarakkara Town", road: "NH744", accidents: 8, lat: 9.0013, lon: 76.7971},
+            {name: "Alappuzha Cherthala", location: "Avenue Road Junction - Ikkara Junction", road: "NH66", accidents: 6, lat: 9.6829, lon: 76.3414},
+            {name: "Kozhikode Kottara", location: "Bhima Junction - Kottara", road: "NH66", accidents: 4, lat: 11.2921, lon: 75.7770},
+            {name: "Ernakulam Muvattupuzha", location: "50m before St. Augustine's Church - 200m after St. Augustine's Church", road: "MC Road", accidents: 2, lat: 9.9877, lon: 76.5761},
+            {name: "Kannur Valapattanam", location: "Pappinisseri Chungam - Velapuram Palam", road: "Panvel - Kanyakumari Road", accidents: 15, lat: 11.9358, lon: 75.3530},
+            {name: "Kasaragod Hosdurg", location: "District Hospital - Chemmattamvayal Road JN", road: "Panvel - Kanyakumari Road", accidents: 7, lat: 12.3143, lon: 75.1055},
+            {name: "Kasaragod Traffic Police Station", location: "Nr. Govt.College - BC Road", road: "Panvel - Kanyakumari Road", accidents: 18, lat: 12.5063, lon: 74.9921},
+            {name: "Kasaragod Traffic Police Station", location: "Nr. Uma Nursing Home - Nr. KIMS Hospital", road: "Panvel - Kanyakumari Road", accidents: 13, lat: 12.5105, lon: 74.9846}        
+        ];
+
+        // Function to determine the color based on the number of accidents
+        function getMarkerColor(accidents) {
+            if (accidents >= 300) return 'red';        // High risk
+            if (accidents >= 100) return 'yellow';     // Caution/Warning
+            return 'green';                            // Low risk
+        }
+
+        // Function to create custom marker icons
+        function createMarkerIcon(accidents) {
+            var color = getMarkerColor(accidents);
+            return L.divIcon({
+                className: 'custom-icon',
+                html: `<div style="width: 20px; height: 20px; background-color: ${color}; border-radius: 50%; text-align: center; color: white; font-weight: bold; line-height: 20px;">⚠️</div>`,
+                iconSize: [20, 20]
+            });
+        }
+
+        // Function to mark accident-prone areas on the map
+        function markAccidentAreas(data) {
+            data.forEach(area => {
+                var markerIcon = createMarkerIcon(area.accidents);
+                var marker = L.marker([area.lat, area.lon], { icon: markerIcon }).addTo(map);
+                marker.bindPopup(`<b>${area.name}</b><br>Location: ${area.location}<br>Road: ${area.road}<br>Accidents: ${area.accidents}`);
+            });
+        }
+
+        // Call function to mark accident areas
+        markAccidentAreas(accidentData);
+
+        // Geocode the location input using Nominatim
+        function geocodeLocation(location) {
+            document.getElementById('searchBtn').innerText = 'Searching...';
+
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.length > 0) {
+                        var lat = parseFloat(data[0].lat);
+                        var lon = parseFloat(data[0].lon);
+                        map.setView([lat, lon], 13); // Zoom into the found location
+
+                        // Remove the previous marker if it exists
+                        if (searchMarker) {
+                            map.removeLayer(searchMarker);
+                        }
+
+                        // Add a marker for the found location
+                        searchMarker = L.marker([lat, lon]).addTo(map)
+                            .bindPopup("<b>Location found:</b><br>" + data[0].display_name)
+                            .openPopup();
+                    } else {
+                        alert('Location not found!');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while searching for the location.');
+                })
+                .finally(() => {
+                    document.getElementById('searchBtn').innerText = 'Search';
+                });
+        }
+
+        // Add event listener for the search button
+        document.getElementById('searchBtn').addEventListener('click', function() {
+            var input = document.getElementById('locationInput').value;
+            if (input) {
+                geocodeLocation(input);
+            } else {
+                alert('Please enter a location name.');
+            }
+        });
+
+        // Allow pressing "Enter" to trigger the search
+        document.getElementById('locationInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                document.getElementById('searchBtn').click();
+            }
+        });
+    </script>
+</body>
+</html>
